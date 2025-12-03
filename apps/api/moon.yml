@@ -25,6 +25,6 @@ tasks:
       - 'src/**/*'
 
   lint:
-    command: 'eslint .'
+    command: 'eslint . --fix'
     inputs:
       - 'src/**/*'

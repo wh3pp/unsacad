@@ -25,3 +25,8 @@ tasks:
       - '@globs(sources)'
       - '@globs(tests)'
       - '@globs(configs)'
+
+  clean:
+    command: 'rimraf dist coverage'
+    options:
+      runInCI: false

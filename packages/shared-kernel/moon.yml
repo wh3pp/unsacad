@@ -15,7 +15,7 @@ tasks:
       - '/tsconfig.base.json'
 
   lint:
-    command: 'eslint .'
+    command: 'eslint . --fix'
     inputs:
       - 'src/**/*'
       - '/eslint.config.js'

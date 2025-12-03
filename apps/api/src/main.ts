@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import { UniqueEntityID } from '@university/shared-kernel';
 
-const app = new Elysia()
+new Elysia()
   .get('/', () => {
     const id = new UniqueEntityID();
     return {
@@ -11,5 +11,3 @@ const app = new Elysia()
     };
   })
   .listen(3000);
-
-console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);

@@ -7,10 +7,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "clean": "moon run :clean",
+    "lint": "moon run :lint"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -19,7 +17,10 @@
     "eslint": "^9.39.1",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.7.4",
-    "typescript-eslint": "^8.48.1",
+    "rimraf": "^6.1.2",
+    "typescript-eslint": "^8.48.1"
+  },
+  "peerDependencies": {
     "typescript": "^5"
   }
 }

@@ -1,0 +1,27 @@
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+fileGroups:
+  configs:
+    - '*.{js,json,yml,yaml}'
+    - 'prettier.config.js'
+    - 'eslint.config.js'
+    - 'tsconfig.json'
+    - 'tsconfig.base.json'
+
+  sources:
+    - 'src/**/*'
+    - 'types/**/*'
+
+  tests:
+    - 'tests/**/*'
+    - '**/__tests__/**/*'
+    - '**/*.test.*'
+    - '**/*.spec.*'
+
+tasks:
+  format:
+    command: 'prettier --check .'
+    inputs:
+      - '@globs(sources)'
+      - '@globs(tests)'
+      - '@globs(configs)'

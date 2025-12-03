@@ -1,1 +1,26 @@
-layer: 'library'
+type: 'library'
+
+language: 'typescript'
+
+project:
+  name: 'shared-kernel'
+  description: 'Core DDD logic shared across the system'
+
+tasks:
+  typecheck:
+    command: 'tsc --noEmit'
+    inputs:
+      - 'src/**/*'
+      - 'tsconfig.json'
+      - '/tsconfig.base.json'
+
+  lint:
+    command: 'eslint .'
+    inputs:
+      - 'src/**/*'
+      - '/eslint.config.js'
+
+  test:
+    command: 'bun test'
+    inputs:
+      - 'src/**/*'

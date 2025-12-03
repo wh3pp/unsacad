@@ -1,0 +1,30 @@
+type: 'application'
+
+language: 'typescript'
+
+project:
+  name: 'api'
+  description: 'Main Backend API using Elysia'
+
+tasks:
+  dev:
+    command: 'bun run --watch src/main.ts'
+    local: true
+
+  build:
+    command: 'bun build ./src/main.ts --compile --outfile ./dist/server'
+    inputs:
+      - 'src/**/*'
+      - 'package.json'
+    outputs:
+      - 'dist'
+
+  test:
+    command: 'bun test'
+    inputs:
+      - 'src/**/*'
+
+  lint:
+    command: 'eslint .'
+    inputs:
+      - 'src/**/*'

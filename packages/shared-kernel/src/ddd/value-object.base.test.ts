@@ -43,7 +43,6 @@ describe('ValueObject', () => {
       name: string;
       tags: string[];
     };
-
     expect(raw).toEqual({ name: 'John', tags: ['Dev', 'Admin'] });
   });
 
@@ -53,8 +52,7 @@ describe('ValueObject', () => {
       tags: [],
     });
 
-    const raw = profile.unpack() as unknown;
-
+    const raw = profile.unpack();
     expect(Object.isFrozen(raw)).toBe(true);
   });
 
@@ -77,8 +75,8 @@ describe('ValueObject', () => {
 
   test('equals handles null and undefined', () => {
     const vo = new NameVO({ value: 'XX' });
-    expect(vo.equals(null as unknown as ValueObject<string> | null)).toBe(false);
-    expect(vo.equals(undefined as unknown as ValueObject<string> | undefined)).toBe(false);
+    expect(vo.equals(null)).toBe(false);
+    expect(vo.equals(undefined)).toBe(false);
   });
 
   test('isValueObject returns true for VO', () => {
@@ -90,5 +88,27 @@ describe('ValueObject', () => {
     expect(ValueObject.isValueObject({})).toBe(false);
     expect(ValueObject.isValueObject(null)).toBe(false);
     expect(ValueObject.isValueObject('test')).toBe(false);
+  });
+
+  test('value getter returns unwrapped value', () => {
+    const vo = new NameVO({ value: 'John' });
+    expect(vo.value).toBe('John');
+  });
+
+  test('value getter unwraps nested structures', () => {
+    const profile = new ProfileVO({
+      name: new NameVO({ value: 'John' }),
+      tags: [new NameVO({ value: 'Dev' })],
+    });
+
+    const raw = profile.value as unknown as {
+      name: string;
+      tags: string[];
+    };
+
+    expect(raw).toEqual({
+      name: 'John',
+      tags: ['Dev'],
+    });
   });
 });

@@ -50,11 +50,11 @@ describe('DomainEvent', () => {
     expect(event.eventName).toBe('UserCreatedEvent');
   });
 
-  test("initializes required event fields", () => {
+  test('initializes required event fields', () => {
     const aggId = new UniqueEntityID();
     const event = new UserCreatedEvent(aggId);
 
-    expect(typeof event.eventId).toBe("string");
+    expect(typeof event.eventId).toBe('string');
     expect(event.eventId.length).toBeGreaterThan(0);
     expect(event.occurredOn).toBeInstanceOf(Date);
     expect(event.aggregateId).toBe(aggId);

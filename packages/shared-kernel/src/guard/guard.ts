@@ -1,10 +1,10 @@
-import { ArgumentInvalidException, ArgumentNotProvidedException } from "src/exceptions";
+import { ArgumentInvalidException, ArgumentNotProvidedException } from 'src/exceptions';
 
 export class Guard {
   static isEmpty(value: unknown): boolean {
     if (Guard.isNullish(value)) return true;
 
-    if (typeof value === "string") return Guard.isEmptyString(value);
+    if (typeof value === 'string') return Guard.isEmptyString(value);
 
     if (Array.isArray(value)) return Guard.isEmptyArray(value);
 
@@ -14,7 +14,7 @@ export class Guard {
       return Guard.isEmptyMapOrSet(value);
     }
 
-    if (typeof value === "object") {
+    if (typeof value === 'object') {
       const entries = Object.entries(value as Record<string, unknown>);
       return Guard.objectEntriesAreEmpty(entries);
     }
@@ -54,6 +54,4 @@ export class Guard {
     if (entries.length === 0) return true;
     return entries.every(([_, v]) => Guard.isEmpty(v));
   }
-
 }
-

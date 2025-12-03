@@ -33,6 +33,13 @@ export abstract class ValueObject<T> {
   }
 
   /**
+   * Returns the public value of the VO.
+   */
+  get value(): T {
+    return this.unpack();
+  }
+
+  /**
    * Domain-specific validation to be implemented by subclasses.
    */
   protected abstract validate(props: ValueObjectProps<T>): void;

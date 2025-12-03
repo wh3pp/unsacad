@@ -20,7 +20,7 @@ fileGroups:
 
 tasks:
   format:
-    command: 'prettier --check .'
+    command: 'prettier --write .'
     inputs:
       - '@globs(sources)'
       - '@globs(tests)'

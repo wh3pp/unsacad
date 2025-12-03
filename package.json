@@ -1,0 +1,26 @@
+{
+  "name": "university-system",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@moonrepo/cli": "^1.41.7",
+    "@types/bun": "latest",
+    "eslint": "^9.39.1",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.48.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

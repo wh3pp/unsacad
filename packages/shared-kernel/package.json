@@ -1,0 +1,15 @@
+{
+  "name": "@university/shared-kernel",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/uuid": "^11.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "uuid": "^13.0.0"
+  }
+}

@@ -1,78 +1,88 @@
 import { UniqueEntityID } from './unique-entity-id';
-import { Guard } from '../guard/guard';
-import { ArgumentNotProvidedException } from '../exceptions';
+
+const ENTITY_BRAND = Symbol('__ENTITY__');
 
 export interface EntityProps {
   [key: string]: unknown;
 }
 
-interface Unpackable {
-  unpack: () => unknown;
+export interface Serializable {
+  toObject(): unknown;
 }
 
-export abstract class Entity<T extends EntityProps> {
+export abstract class Entity<T extends EntityProps> implements Serializable {
   protected readonly _id: UniqueEntityID;
-  protected readonly props: T;
+  public readonly props: Readonly<T>;
+  public readonly [ENTITY_BRAND]: boolean = true;
 
   constructor(props: T, id?: UniqueEntityID) {
-    this.validateProps(props);
     this._id = id ?? new UniqueEntityID();
-    this.props = props;
+    this.props = Object.freeze({ ...props });
+    this.validate();
   }
 
   get id(): UniqueEntityID {
     return this._id;
   }
 
-  static isEntity(value: unknown): value is Entity<EntityProps> {
-    return value instanceof Entity;
+  protected validate(): void {}
+
+  static isEntity(v: unknown): v is Entity<EntityProps> {
+    return typeof v === 'object' && v !== null && ENTITY_BRAND in v;
   }
 
-  equals(entity?: Entity<T>): boolean {
-    if (entity === null || entity === undefined) return false;
-    if (this === entity) return true;
-    if (!Entity.isEntity(entity)) return false;
-
-    return this._id.equals(entity._id);
+  public equals(object?: Entity<T>): boolean {
+    if (object === null || object === undefined) return false;
+    if (this === object) return true;
+    if (!Entity.isEntity(object)) return false;
+    return this._id.equals(object._id);
   }
 
-  toObject(): Record<string, unknown> {
+  public toObject(): Record<string, unknown> {
+    const plainProps = this.convertPropsToPlainObject(this.props);
     return {
       id: this._id.toString(),
-      ...(Entity.serialize(this.props) as Record<string, unknown>),
+      ...plainProps,
     };
   }
 
-  protected validateProps(props: T): void {
-    if (Guard.isEmpty(props)) {
-      throw new ArgumentNotProvidedException('Entity props cannot be empty');
+  private convertPropsToPlainObject(props: EntityProps): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(props)) {
+      const value = props[key];
+      result[key] = this.serializeValue(value);
     }
-    if (typeof props !== 'object') {
-      throw new ArgumentNotProvidedException('Entity props must be an object');
-    }
+    return result;
   }
 
-  private static serialize(value: unknown): unknown {
-    if (Entity.isEntity(value)) {
-      return value.toObject();
+  private serializeValue(value: unknown): unknown {
+    if (value instanceof Date) {
+      return value.toISOString();
     }
 
     if (Array.isArray(value)) {
-      return value.map((v) => Entity.serialize(v));
+      return value.map((v) => this.serializeValue(v));
     }
 
-    if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
-      if ('unpack' in value && typeof (value as Unpackable).unpack === 'function') {
-        return Entity.serialize((value as Unpackable).unpack());
-      }
+    if (this.isSerializable(value)) {
+      return value.toObject();
+    }
 
-      const result: Record<string, unknown> = {};
-      for (const [key, val] of Object.entries(value)) {
-        result[key] = Entity.serialize(val);
-      }
-      return result;
+    if (typeof value === 'object' && value !== null) {
+      return this.convertPropsToPlainObject(value as EntityProps);
     }
 
     return value;
+  }
+
+  private isSerializable(value: unknown): value is Serializable {
+    const candidate = value as Record<string, unknown>;
+
+    return (
+      typeof candidate === 'object' &&
+      candidate !== null &&
+      'toObject' in candidate &&
+      typeof candidate['toObject'] === 'function'
+    );
   }
 }

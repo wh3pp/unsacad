@@ -1,4 +1,11 @@
-import type { ActiveFlagVO, EmailVO, ExternalKeyVO, HashedPasswordVO, NameVO } from "./value-objects";
+import type {
+  ActiveFlagVO,
+  EmailVO,
+  ExternalKeyVO,
+  HashedPasswordVO,
+  NameVO,
+  UserRoleVO,
+} from './value-objects';
 
 export enum UserRole {
   STUDENT = 'STUDENT',
@@ -12,7 +19,7 @@ export interface UserAccountProps {
   email: EmailVO;
   firstName: NameVO;
   lastName: NameVO;
-  role: UserRole;
+  role: UserRoleVO;
   passwordHash: HashedPasswordVO;
   isActive: ActiveFlagVO;
 }

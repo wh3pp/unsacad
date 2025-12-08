@@ -1,4 +1,8 @@
-import { ArgumentInvalidException, ValueObject, type DomainPrimitive } from "@university/shared-kernel";
+import {
+  ArgumentInvalidException,
+  ValueObject,
+  type DomainPrimitive,
+} from '@unsacad/shared-kernel';
 /**
  * Represents any human name component (first name or last name).
  * Normalized to FULL UPPERCASE.
@@ -8,11 +12,11 @@ export class NameVO extends ValueObject<string> {
     let value = props.value.trim();
 
     if (value.length < 2) {
-      throw new ArgumentInvalidException("Name must be at least 2 characters");
+      throw new ArgumentInvalidException('Name must be at least 2 characters');
     }
 
     if (!/^[a-zA-ZÀ-ÖØ-öø-ÿ' -]+$/.test(value)) {
-      throw new ArgumentInvalidException("Name contains invalid characters");
+      throw new ArgumentInvalidException('Name contains invalid characters');
     }
 
     value = value.toUpperCase();

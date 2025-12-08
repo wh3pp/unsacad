@@ -1,10 +1,10 @@
-import { ValueObject } from "@university/shared-kernel";
+import { ValueObject } from '@unsacad/shared-kernel';
 
 /**
  * Active/inactive flag VO.
  */
 export class ActiveFlagVO extends ValueObject<boolean> {
-  protected validate(): void { }
+  protected validate(): void {}
 
   activate(): ActiveFlagVO {
     return new ActiveFlagVO({ value: true });

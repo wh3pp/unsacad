@@ -1,5 +1,8 @@
-import { ArgumentInvalidException, ValueObject, type DomainPrimitive } from "@university/shared-kernel";
-
+import {
+  ArgumentInvalidException,
+  ValueObject,
+  type DomainPrimitive,
+} from '@unsacad/shared-kernel';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
@@ -10,7 +13,7 @@ export class EmailVO extends ValueObject<string> {
     const value = props.value.trim().toLowerCase();
 
     if (!EMAIL_REGEX.test(value)) {
-      throw new ArgumentInvalidException("Invalid email format");
+      throw new ArgumentInvalidException('Invalid email format');
     }
     props.value = value;
   }

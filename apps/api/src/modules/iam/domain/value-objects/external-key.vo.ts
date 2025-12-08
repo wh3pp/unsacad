@@ -1,14 +1,17 @@
-import { ArgumentInvalidException, ValueObject, type DomainPrimitive } from "@university/shared-kernel";
+import {
+  ArgumentInvalidException,
+  ValueObject,
+  type DomainPrimitive,
+} from '@unsacad/shared-kernel';
 
-const UUID_V4_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class ExternalKeyVO extends ValueObject<string> {
   protected validate(props: DomainPrimitive<string>): void {
     const raw = props.value.trim();
 
     if (!UUID_V4_REGEX.test(raw)) {
-      throw new ArgumentInvalidException("ExternalKey must be a valid UUID v4");
+      throw new ArgumentInvalidException('ExternalKey must be a valid UUID v4');
     }
 
     props.value = raw;

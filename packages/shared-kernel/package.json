@@ -1,5 +1,5 @@
 {
-  "name": "@university/shared-kernel",
+  "name": "@unsacad/shared-kernel",
   "version": "0.0.1",
   "type": "module",
   "main": "./src/index.ts",

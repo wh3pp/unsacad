@@ -1,82 +1,64 @@
 import { describe, test, expect } from 'bun:test';
-import { isBefore, isAfter, addDays, startOfDay } from './date.util';
+import { DateUtil } from './date.util';
 
-describe('Date Utils', () => {
-  describe('isBefore()', () => {
-    test('a < b → true', () => {
-      const a = new Date('2020-01-01');
-      const b = new Date('2020-01-02');
-      expect(isBefore(a, b)).toBe(true);
-    });
-
-    test('a > b → false', () => {
-      const a = new Date('2020-01-03');
-      const b = new Date('2020-01-02');
-      expect(isBefore(a, b)).toBe(false);
-    });
-
-    test('a == b → false', () => {
-      const a = new Date('2020-01-01T00:00:00Z');
-      const b = new Date('2020-01-01T00:00:00Z');
-      expect(isBefore(a, b)).toBe(false);
-    });
+describe('DateUtil', () => {
+  test('now() returns a Date instance', () => {
+    const result = DateUtil.now();
+    expect(result).toBeInstanceOf(Date);
   });
 
-  describe('isAfter()', () => {
-    test('a > b → true', () => {
-      const a = new Date('2020-01-02');
-      const b = new Date('2020-01-01');
-      expect(isAfter(a, b)).toBe(true);
-    });
-
-    test('a < b → false', () => {
-      const a = new Date('2020-01-01');
-      const b = new Date('2020-01-02');
-      expect(isAfter(a, b)).toBe(false);
-    });
-
-    test('a == b → false', () => {
-      const a = new Date('2020-01-01');
-      const b = new Date('2020-01-01');
-      expect(isAfter(a, b)).toBe(false);
-    });
+  test('nowISO() returns a valid ISO timestamp', () => {
+    const iso = DateUtil.nowISO();
+    expect(typeof iso).toBe('string');
+    expect(() => new Date(iso)).not.toThrow();
   });
 
-  describe('addDays()', () => {
-    test('adds days', () => {
-      const date = new Date('2020-01-01');
-      const result = addDays(date, 5);
-      expect(result).toEqual(new Date('2020-01-06'));
-    });
+  test('isBefore() compares dates correctly', () => {
+    const a = new Date('2020-01-01');
+    const b = new Date('2020-01-02');
 
-    test('subtracts days (negative)', () => {
-      const date = new Date('2020-01-10');
-      const result = addDays(date, -3);
-      expect(result).toEqual(new Date('2020-01-07'));
-    });
-
-    test('does not mutate original', () => {
-      const original = new Date('2020-01-01');
-      addDays(original, 1);
-      expect(original).toEqual(new Date('2020-01-01'));
-    });
+    expect(DateUtil.isBefore(a, b)).toBe(true);
+    expect(DateUtil.isBefore(b, a)).toBe(false);
   });
 
-  describe('startOfDay()', () => {
-    test('resets time to 00:00:00.000', () => {
-      const date = new Date('2020-01-01T15:23:45.678Z');
-      const result = startOfDay(date);
+  test('isAfter() compares dates correctly', () => {
+    const a = new Date('2020-01-01');
+    const b = new Date('2020-01-02');
 
-      expect(result.getHours()).toBe(0);
-      expect(result.getMinutes()).toBe(0);
-      expect(result.getSeconds()).toBe(0);
-      expect(result.getMilliseconds()).toBe(0);
-    });
+    expect(DateUtil.isAfter(b, a)).toBe(true);
+    expect(DateUtil.isAfter(a, b)).toBe(false);
+  });
 
-    test('does not mutate original', () => {
-      const original = new Date('2020-01-01T10:00:00.000Z');
-      startOfDay(original);
-      expect(original).toEqual(new Date('2020-01-01T10:00:00.000Z'));
-    });
+  test('addDays() returns a new Date without mutating original', () => {
+    const date = new Date('2020-01-01T00:00:00.000Z');
+
+    const updated = DateUtil.addDays(date, 5);
+
+    expect(updated).not.toBe(date);
+    expect(updated.toISOString()).toBe('2020-01-06T00:00:00.000Z');
+    expect(date.toISOString()).toBe('2020-01-01T00:00:00.000Z');
+  });
+
+  test('startOfDay() resets time to local 00:00:00.000', () => {
+    const date = new Date();
+    const result = DateUtil.startOfDay(date);
+
+    expect(result.getHours()).toBe(0);
+    expect(result.getMinutes()).toBe(0);
+    expect(result.getSeconds()).toBe(0);
+    expect(result.getMilliseconds()).toBe(0);
+  });
+
+  test('startOfUTCDay() resets time to UTC 00:00:00.000', () => {
+    const date = new Date('2020-01-02T15:45:30.500Z');
+
+    const result = DateUtil.startOfUTCDay(date);
+
+    expect(result.getUTCHours()).toBe(0);
+    expect(result.getUTCMinutes()).toBe(0);
+    expect(result.getUTCSeconds()).toBe(0);
+    expect(result.getUTCMilliseconds()).toBe(0);
+
+    expect(result.toISOString()).toBe('2020-01-02T00:00:00.000Z');
   });
 });

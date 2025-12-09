@@ -26,8 +26,8 @@ export const Result = {
   /**
    * Creates a successful `Ok` containing the given value.
    */
-  ok<T, E = never>(value: T): Result<T, E> {
-    return new Ok(value);
+  ok<T, E = never>(value?: T): Result<T, E> {
+    return new Ok(value as T);
   },
 
   /**

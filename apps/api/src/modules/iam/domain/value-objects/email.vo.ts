@@ -1,20 +1,20 @@
-import {
-  ArgumentInvalidException,
-  ValueObject,
-  type DomainPrimitive,
-} from '@unsacad/shared-kernel';
+import { ValueObject, Result } from '@unsacad/shared-kernel';
+import { InvalidEmailError } from '../iam.errors';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/**
- * Email value object.
- */
 export class EmailVO extends ValueObject<string> {
-  protected validate(props: DomainPrimitive<string>): void {
-    const value = props.value.trim().toLowerCase();
+  private constructor(props: { value: string }) {
+    super(props);
+  }
 
-    if (!EMAIL_REGEX.test(value)) {
-      throw new ArgumentInvalidException('Invalid email format');
+  static create(email: string): Result<EmailVO, InvalidEmailError> {
+    const trimmed = email.trim().toLowerCase();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(trimmed)) {
+      return Result.err(new InvalidEmailError(trimmed));
     }
-    props.value = value;
+
+    return Result.ok(new EmailVO({ value: trimmed }));
   }
 }

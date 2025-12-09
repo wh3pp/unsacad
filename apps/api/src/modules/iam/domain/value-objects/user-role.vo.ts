@@ -1,14 +1,16 @@
-import {
-  ArgumentInvalidException,
-  ValueObject,
-  type DomainPrimitive,
-} from '@unsacad/shared-kernel';
+import { ValueObject, Result } from '@unsacad/shared-kernel';
 import { UserRole } from '../iam.types';
+import { InvalidRoleError } from '../iam.errors';
 
 export class UserRoleVO extends ValueObject<UserRole> {
-  protected validate(props: DomainPrimitive<UserRole>): void {
-    if (!Object.values(UserRole).includes(props.value)) {
-      throw new ArgumentInvalidException('Invalid user role');
+  private constructor(props: { value: UserRole }) {
+    super(props);
+  }
+
+  static create(role: string): Result<UserRoleVO, InvalidRoleError> {
+    if (!Object.values(UserRole).includes(role as UserRole)) {
+      return Result.err(new InvalidRoleError(role));
     }
+    return Result.ok(new UserRoleVO({ value: role as UserRole }));
   }
 }

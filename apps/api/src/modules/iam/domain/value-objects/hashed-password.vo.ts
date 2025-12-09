@@ -1,18 +1,15 @@
-import {
-  ArgumentInvalidException,
-  ValueObject,
-  type DomainPrimitive,
-} from '@unsacad/shared-kernel';
+import { ValueObject, Result, Guard } from '@unsacad/shared-kernel';
+import { InvalidPasswordError } from '../iam.errors';
 
 export class HashedPasswordVO extends ValueObject<string> {
-  protected validate(props: DomainPrimitive<string>): void {
-    const value = props.value.trim();
+  private constructor(props: { value: string }) {
+    super(props);
+  }
 
-    if (value.length < 20) {
-      throw new ArgumentInvalidException('Password hash is invalid');
+  static create(hashedValue: string): Result<HashedPasswordVO, InvalidPasswordError> {
+    if (Guard.isEmpty(hashedValue)) {
+      return Result.err(new InvalidPasswordError('El hash de contraseña no puede estar vacío.'));
     }
-
-    // TODO: ensue format (bcrypt, argon, etc.)
-    props.value = value;
+    return Result.ok(new HashedPasswordVO({ value: hashedValue }));
   }
 }

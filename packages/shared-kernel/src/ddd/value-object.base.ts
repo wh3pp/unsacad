@@ -27,8 +27,8 @@ export abstract class ValueObject<T> {
   /**
    * Returns the public value of the VO.
    */
-  get value(): unknown {
-    return this.unpack();
+  get value(): T {
+    return this.unpack() as T;
   }
 
   /**

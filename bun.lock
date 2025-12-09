@@ -28,6 +28,7 @@
         "@mikro-orm/core": "^6.6.1",
         "@mikro-orm/postgresql": "^6.6.1",
         "@mikro-orm/reflection": "^6.6.1",
+        "@unsacad/api-contract": "workspace:*",
         "@unsacad/shared-kernel": "workspace:*",
         "elysia": "^1.4.17",
         "pino": "^10.1.0",
@@ -36,6 +37,10 @@
       "devDependencies": {
         "@types/bun": "latest",
       },
+    },
+    "packages/api-contract": {
+      "name": "@unsacad/api-contract",
+      "version": "0.0.1",
     },
     "packages/shared-kernel": {
       "name": "@unsacad/shared-kernel",
@@ -166,6 +171,8 @@
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.49.0", "", { "dependencies": { "@typescript-eslint/types": "8.49.0", "eslint-visitor-keys": "^4.2.1" } }, "sha512-LlKaciDe3GmZFphXIc79THF/YYBugZ7FS1pO581E/edlVVNbZKDy93evqmrfQ9/Y4uN0vVhX4iuchq26mK/iiA=="],
 
     "@unhead/schema": ["@unhead/schema@1.11.20", "", { "dependencies": { "hookable": "^5.5.3", "zhead": "^2.2.4" } }, "sha512-0zWykKAaJdm+/Y7yi/Yds20PrUK7XabLe9c3IRcjnwYmSWY6z0Cr19VIs3ozCj8P+GhR+/TI2mwtGlueCEYouA=="],
+
+    "@unsacad/api-contract": ["@unsacad/api-contract@workspace:packages/api-contract"],
 
     "@unsacad/shared-kernel": ["@unsacad/shared-kernel@workspace:packages/shared-kernel"],
 

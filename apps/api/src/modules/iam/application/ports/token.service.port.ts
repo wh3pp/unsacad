@@ -1,16 +1,7 @@
-export interface TokenPayload {
-  userId: string;
-  username: string;
-  role: string;
-}
-
-export interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
+import type { AuthTokenPayload, AuthTokenResponse } from '@unsacad/api-contract';
+import type { Option } from '@unsacad/shared-kernel';
 
 export interface TokenServicePort {
-  generateAuthTokens(payload: TokenPayload): Promise<TokenResponse>;
-  verifyToken(token: string): Promise<TokenPayload | null>;
+  generateAuthTokens(payload: AuthTokenPayload): Promise<AuthTokenResponse>;
+  verifyToken(token: string): Promise<Option<AuthTokenPayload>>;
 }

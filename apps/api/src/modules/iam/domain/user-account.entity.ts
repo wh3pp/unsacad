@@ -92,6 +92,10 @@ export class UserAccount extends AggregateRoot<UserAccountProps> {
     super(props, id);
   }
 
+  static unsafe(props: UserAccountProps, id: UniqueEntityID): UserAccount {
+    return new UserAccount(props, id);
+  }
+
   get username(): string {
     return this.props.username.value;
   }

@@ -1,35 +1,33 @@
-import { ExceptionBase, type ExceptionOptions } from './exception.base';
+import { ExceptionBase } from './exception.base';
+
+const CODES = {
+  ARGUMENT_INVALID: 'ArgumentInvalidException',
+  ARGUMENT_NOT_PROVIDED: 'ArgumentNotProvidedException',
+  NOT_FOUND: 'NotFoundException',
+} as const;
 
 /**
- * Common exception thrown when an argument is missing or empty.
- */
-export class ArgumentNotProvidedException extends ExceptionBase {
-  override readonly name = 'ArgumentNotProvidedException';
-
-  constructor(message: string, options?: ExceptionOptions) {
-    super(message, options);
-  }
-}
-
-/**
- * Common exception thrown when an argument has an invalid format or value.
+ * Thrown when an argument does not meet the required format or constraints.
  */
 export class ArgumentInvalidException extends ExceptionBase {
-  override readonly name = 'ArgumentInvalidException';
-
-  constructor(message: string, options?: ExceptionOptions) {
-    super(message, options);
-  }
+  readonly name = CODES.ARGUMENT_INVALID;
 }
 
 /**
- * Thrown when an entity cannot be found in the domain.
- * (Useful for aggregates and repository usage)
+ * Thrown when a required argument is missing (null or undefined).
+ */
+export class ArgumentNotProvidedException extends ExceptionBase {
+  readonly name = CODES.ARGUMENT_NOT_PROVIDED;
+}
+
+/**
+ * Thrown when a required entity cannot be found and this is considered an error.
+ * Note: For optional lookups, prefer returning `Option.none()` or `Result.err(new UserNotFoundError())` instead.
  */
 export class NotFoundException extends ExceptionBase {
-  override readonly name = 'NotFoundException';
+  readonly name = CODES.NOT_FOUND;
 
-  constructor(message: string, options?: ExceptionOptions) {
-    super(message, options);
+  constructor(message = 'Not found', metadata?: Record<string, unknown>) {
+    super(message, { metadata });
   }
 }

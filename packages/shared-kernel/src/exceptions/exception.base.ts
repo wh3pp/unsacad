@@ -12,8 +12,13 @@ export interface ExceptionOptions {
 }
 
 export abstract class ExceptionBase extends Error {
+  /** Exception identifier. */
   abstract override readonly name: string;
+
+  /** Optional underlying cause. */
   public override readonly cause?: unknown;
+
+  /** Extra metadata for debugging or logging. */
   public readonly metadata?: Record<string, unknown>;
 
   constructor(message: string, options?: ExceptionOptions) {
@@ -27,6 +32,9 @@ export abstract class ExceptionBase extends Error {
     }
   }
 
+  /**
+   * Converts the exception into a serializable JSON structure.
+   */
   toJSON(): SerializedException {
     return {
       message: this.message,

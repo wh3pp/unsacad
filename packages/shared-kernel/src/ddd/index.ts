@@ -3,3 +3,4 @@ export * from './entity.base';
 export * from './aggregate-root.base';
 export * from './domain-event.base';
 export * from './unique-entity-id';
+export * from './domain-error.base';

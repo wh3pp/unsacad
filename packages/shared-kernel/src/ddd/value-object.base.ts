@@ -1,6 +1,3 @@
-import { ArgumentNotProvidedException } from '../exceptions';
-import { Guard } from '../guard/guard';
-
 export type Primitive = string | number | boolean | Date;
 
 export interface DomainPrimitive<T extends Primitive> {
@@ -15,34 +12,24 @@ export type ValueObjectProps<T> = T extends Primitive ? DomainPrimitive<T> : T;
  * A Value Object:
  * - is immutable
  * - is compared by structure (not identity)
- * - enforces domain invariants inside `validate`
- * - may wrap primitives or complex structures
+ * - should be instantiated via a static factory method that returns a Result<T, E>
  */
 export abstract class ValueObject<T> {
   protected readonly props: ValueObjectProps<T>;
 
   /**
-   * Creates a new immutable Value Object and validates invariants.
-   *
-   * @throws ArgumentNotProvidedException if `props` or primitive values are empty
+   * Assumes validation occurred in the factory method.
    */
-  constructor(props: ValueObjectProps<T>) {
-    this.checkIfEmpty(props);
-    this.validate(props);
+  protected constructor(props: ValueObjectProps<T>) {
     this.props = Object.freeze(props) as ValueObjectProps<T>;
   }
 
   /**
    * Returns the public value of the VO.
    */
-  get value(): T {
+  get value(): unknown {
     return this.unpack();
   }
-
-  /**
-   * Domain-specific validation to be implemented by subclasses.
-   */
-  protected abstract validate(props: ValueObjectProps<T>): void;
 
   /**
    * Type guard that checks if the given object is a ValueObject instance.
@@ -54,9 +41,9 @@ export abstract class ValueObject<T> {
   /**
    * Returns the raw value represented by the Value Object.
    */
-  public unpack(): T {
+  public unpack(): unknown {
     if (this.isDomainPrimitive(this.props)) {
-      return this.props.value as T;
+      return this.props.value;
     }
     const unpacked = ValueObject.unpackRecursively(this.props);
     return Object.freeze(unpacked as T);
@@ -70,21 +57,8 @@ export abstract class ValueObject<T> {
     if (vo === null || vo === undefined) return false;
     if (vo.props === undefined) return false;
     if (this === vo) return true;
-    return JSON.stringify(this.props) === JSON.stringify(vo.props);
-  }
 
-  /**
-   * Ensures props and primitive values are not empty.
-   *
-   * @throws ArgumentNotProvidedException
-   */
-  private checkIfEmpty(props: ValueObjectProps<T>): void {
-    if (Guard.isEmpty(props)) {
-      throw new ArgumentNotProvidedException('ValueObject props cannot be empty');
-    }
-    if (this.isDomainPrimitive(props) && Guard.isEmpty(props.value)) {
-      throw new ArgumentNotProvidedException('DomainPrimitive value cannot be empty');
-    }
+    return JSON.stringify(this.props) === JSON.stringify(vo.props);
   }
 
   /**

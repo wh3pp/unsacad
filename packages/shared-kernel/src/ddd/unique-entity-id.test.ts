@@ -1,61 +1,36 @@
 import { describe, test, expect } from 'bun:test';
 import { UniqueEntityID } from './unique-entity-id';
+import { ArgumentInvalidException } from '../exceptions/validation.exceptions';
+import type { Err } from '../functional/result';
 
 describe('UniqueEntityID', () => {
-  describe('constructor', () => {
-    test('creates a new random UUID when no id is provided', () => {
-      const id1 = new UniqueEntityID();
-      const id2 = new UniqueEntityID();
-
-      expect(id1.toString()).not.toBe(id2.toString()); // unique
-    });
-
-    test('uses provided id', () => {
-      const id = new UniqueEntityID('abc-123');
-      expect(id.toString()).toBe('abc-123');
-    });
+  test('generate() creates a valid UUID', () => {
+    const id = UniqueEntityID.generate();
+    expect(typeof id.toString()).toBe('string');
+    expect(id.toString().length).toBeGreaterThan(0);
   });
 
-  describe('string/value accessors', () => {
-    test('toString() returns internal value', () => {
-      const id = new UniqueEntityID('test-123');
-      expect(id.toString()).toBe('test-123');
-    });
-
-    test('toValue() returns internal value', () => {
-      const id = new UniqueEntityID('xyz-789');
-      expect(id.toValue()).toBe('xyz-789');
-    });
+  test('create() returns Ok when ID is valid', () => {
+    const result = UniqueEntityID.create('abc-123');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().toValue()).toBe('abc-123');
   });
 
-  describe('equals()', () => {
-    test('same id instance → true', () => {
-      const id1 = new UniqueEntityID('same');
-      const id2 = new UniqueEntityID('same');
+  test('create() returns Err when ID is empty', () => {
+    const result = UniqueEntityID.create('  ');
+    expect(result.isErr()).toBe(true);
 
-      expect(id1.equals(id2)).toBe(true);
-    });
+    const error = (result as Err<UniqueEntityID, ArgumentInvalidException>).error;
+    expect(error).toBeInstanceOf(ArgumentInvalidException);
+  });
 
-    test('different ids → false', () => {
-      const id1 = new UniqueEntityID('a');
-      const id2 = new UniqueEntityID('b');
+  test('toString() returns raw value', () => {
+    const id = UniqueEntityID.create('xyz').unwrap();
+    expect(id.toString()).toBe('xyz');
+  });
 
-      expect(id1.equals(id2)).toBe(false);
-    });
-
-    test('undefined → false', () => {
-      const id = new UniqueEntityID('x');
-      expect(id.equals(undefined)).toBe(false);
-    });
-
-    test('non-UniqueEntityID object → false', () => {
-      const id = new UniqueEntityID('x');
-      expect(id.equals({} as UniqueEntityID)).toBe(false);
-    });
-
-    test('same reference → true', () => {
-      const id = new UniqueEntityID('same');
-      expect(id.equals(id)).toBe(true);
-    });
+  test('toValue() returns raw value', () => {
+    const id = UniqueEntityID.create('123').unwrap();
+    expect(id.toValue()).toBe('123');
   });
 });

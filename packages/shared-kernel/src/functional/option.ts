@@ -1,102 +1,207 @@
 import { UnwrapOptionError } from './errors';
 
-export const enum OptionKind {
-  Some = 0,
-  None = 1,
-}
+export type Option<T> = Some<T> | None<T>;
 
-export interface Some<T> {
-  readonly kind: OptionKind.Some;
-  readonly value: T;
-}
+/**
+ * Extracts the inner value types from a tuple of Option values,
+ * preserving positional types (supports readonly tuples).
+ */
+type ExtractSomeTuple<T extends readonly unknown[]> = {
+  [K in keyof T]: T[K] extends Option<infer V> ? V : never;
+};
 
-export interface None {
-  readonly kind: OptionKind.None;
-}
-
-export type Option<T> = Some<T> | None;
-
-// Singleton to avoid duplications
-const NONE: None = { kind: OptionKind.None } as const;
-
+/**
+ * Static utilities for constructing and working with `Option`.
+ * Represents an optional value: either `Some(value)` or `None`.
+ */
 export const Option = {
   /**
-   * Creates an Option containing a value.
+   * Creates a `Some` wrapping the provided value.
    */
   some<T>(value: T): Option<T> {
-    return { kind: OptionKind.Some, value };
+    return new Some(value);
   },
 
   /**
-   * Returns an empty Option (`None`).
+   * Returns the shared `None` instance.
+   * Generic typed via contextual inference.
    */
   none<T = never>(): Option<T> {
     return NONE as Option<T>;
   },
 
   /**
-   * Type guard — true if the Option contains a value.
+   * Converts a nullable value into an Option.
+   * `null`/`undefined` → `None`, otherwise `Some(value)`.
    */
-  isSome<T>(opt: Option<T>): opt is Some<T> {
-    return opt.kind === OptionKind.Some;
+  fromNullable<T>(value: T | null | undefined): Option<T> {
+    return value === null || value === undefined ? Option.none<T>() : new Some(value);
   },
 
   /**
-   * Type guard — true if the Option is empty.
+   * Combines a homogeneous list of Options.
+   * Returns `Some` of all values if every item is `Some`,
+   * otherwise returns `None`.
    */
-  isNone<T>(opt: Option<T>): opt is None {
-    return opt.kind === OptionKind.None;
-  },
-
-  /**
-   * Returns the contained value or throws `UnwrapOptionError` if None.
-   */
-  unwrap<T>(opt: Option<T>): T {
-    if (Option.isNone(opt)) {
-      throw new UnwrapOptionError();
+  combine<T>(options: readonly Option<T>[]): Option<T[]> {
+    const values: T[] = [];
+    for (const option of options) {
+      if (option.isNone()) return Option.none();
+      values.push(option.value);
     }
-    return opt.value;
+    return new Some(values);
   },
 
   /**
-   * Returns the contained value or the provided default.
+   * Combines a heterogeneous tuple of Options,
+   * preserving the positional output types.
    */
-  unwrapOr<T>(opt: Option<T>, defaultValue: T): T {
-    return Option.isSome(opt) ? opt.value : defaultValue;
-  },
+  all<T extends readonly Option<unknown>[]>(options: T): Option<ExtractSomeTuple<T>> {
+    const values: unknown[] = [];
 
-  /**
-   * Returns the value or computes a fallback via the provided function.
-   */
-  unwrapOrElse<T>(opt: Option<T>, fn: () => T): T {
-    return Option.isSome(opt) ? opt.value : fn();
-  },
+    for (const option of options) {
+      if (option.isNone()) return Option.none();
+      values.push(option.value);
+    }
 
-  /**
-   * Maps the contained value using the provided function.
-   * Returns None if the Option is None.
-   */
-  map<T, U>(opt: Option<T>, fn: (value: T) => U): Option<U> {
-    return Option.isSome(opt) ? Option.some(fn(opt.value)) : Option.none();
-  },
-
-  /**
-   * Flat-maps the Option, chaining computations that also return Option.
-   */
-  andThen<T, U>(opt: Option<T>, fn: (value: T) => Option<U>): Option<U> {
-    return Option.isSome(opt) ? fn(opt.value) : Option.none();
-  },
-
-  /**
-   * Pattern matching for Option — runs the appropriate handler.
-   */
-  match<T, R>(
-    opt: Option<T>,
-    handlers: {
-      readonly some: (value: T) => R;
-      readonly none: () => R;
-    },
-  ): R {
-    return Option.isSome(opt) ? handlers.some(opt.value) : handlers.none();
+    return new Some(values as ExtractSomeTuple<T>);
   },
 };
+
+/**
+ * Base class providing the fluent API shared by `Some` and `None`.
+ */
+abstract class BaseOption<T> {
+  abstract isSome(): this is Some<T>;
+  abstract isNone(): this is None<T>;
+
+  /**
+   * Maps the value if `Some`; otherwise returns `None`.
+   */
+  map<U>(fn: (value: T) => U): Option<U> {
+    return this.isSome() ? new Some(fn(this.value)) : Option.none();
+  }
+
+  /**
+   * Chains computations returning an Option (`flatMap` / `bind`).
+   */
+  andThen<U>(fn: (value: T) => Option<U>): Option<U> {
+    return this.isSome() ? fn(this.value) : Option.none();
+  }
+
+  /**
+   * Keeps the value only if it satisfies the predicate.
+   */
+  filter(predicate: (value: T) => boolean): Option<T> {
+    return this.isSome() && predicate(this.value) ? this : Option.none();
+  }
+
+  /**
+   * Pattern-matching helper for exhaustive handling of `Some` and `None`.
+   */
+  match<R>(handlers: { some: (value: T) => R; none: () => R }): R {
+    return this.isSome() ? handlers.some(this.value) : handlers.none();
+  }
+
+  /**
+   * Returns the value if `Some`, otherwise throws `UnwrapOptionError`.
+   */
+  unwrap(): T {
+    if (this.isSome()) return this.value;
+    throw new UnwrapOptionError();
+  }
+
+  /**
+   * Returns the value if `Some`, otherwise the provided default.
+   */
+  unwrapOr(defaultValue: T): T {
+    return this.isSome() ? this.value : defaultValue;
+  }
+
+  /**
+   * Returns the value if `Some`, otherwise evaluates a fallback function.
+   */
+  unwrapOrElse(fn: () => T): T {
+    return this.isSome() ? this.value : fn();
+  }
+
+  /**
+   * Executes a side effect when `Some`.
+   */
+  tap(fn: (value: T) => void): this {
+    if (this.isSome()) fn(this.value);
+    return this;
+  }
+
+  /**
+   * Converts the Option into a Promise.
+   * Resolves with the value if `Some`; rejects if `None`.
+   */
+  toPromise(error?: Error): Promise<T> {
+    return this.isSome()
+      ? Promise.resolve(this.value)
+      : Promise.reject(error || new UnwrapOptionError());
+  }
+
+  /**
+   * Converts the Option to a nullable value.
+   */
+  toNullable(): T | null {
+    return this.isSome() ? this.value : null;
+  }
+
+  /**
+   * Structural equality check.
+   * Allows comparing Options with different generic types.
+   */
+  equals(other: Option<unknown>): boolean {
+    if (this.isSome() && other.isSome()) {
+      return JSON.stringify(this.value) === JSON.stringify(other.value);
+    }
+    return this.isNone() && other.isNone();
+  }
+
+  toString(): string {
+    return this.isSome() ? `Some(${JSON.stringify(this.value)})` : 'None';
+  }
+}
+
+/**
+ * Represents an Option containing a value.
+ */
+export class Some<T> extends BaseOption<T> {
+  readonly kind = 'Some';
+
+  constructor(public readonly value: T) {
+    super();
+  }
+
+  isSome(): this is Some<T> {
+    return true;
+  }
+
+  isNone(): this is None<T> {
+    return false;
+  }
+}
+
+/**
+ * Represents the absence of a value (`None`).
+ * Implemented as a singleton, since all None instances are identical.
+ */
+export class None<T> extends BaseOption<T> {
+  readonly kind = 'None';
+
+  isSome(): this is Some<T> {
+    return false;
+  }
+
+  isNone(): this is None<T> {
+    return true;
+  }
+}
+
+/**
+ * Singleton instance used for all `None` values.
+ */
+const NONE = new None<unknown>();

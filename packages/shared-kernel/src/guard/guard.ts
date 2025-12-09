@@ -1,57 +1,35 @@
-import { ArgumentInvalidException, ArgumentNotProvidedException } from 'src/exceptions';
-
-export class Guard {
-  static isEmpty(value: unknown): boolean {
-    if (Guard.isNullish(value)) return true;
-
-    if (typeof value === 'string') return Guard.isEmptyString(value);
-
-    if (Array.isArray(value)) return Guard.isEmptyArray(value);
-
-    if (value instanceof Date) return false;
-
-    if (value instanceof Map || value instanceof Set) {
-      return Guard.isEmptyMapOrSet(value);
-    }
-
-    if (typeof value === 'object') {
-      const entries = Object.entries(value as Record<string, unknown>);
-      return Guard.objectEntriesAreEmpty(entries);
-    }
-
+/**
+ * Utility object for common validation checks (guards).
+ */
+export const Guard = {
+  /**
+   * Returns true if the value is null, undefined, an empty string, or an empty array.
+   */
+  isEmpty(value: unknown): boolean {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string' && value.trim().length === 0) return true;
+    if (Array.isArray(value) && value.length === 0) return true;
     return false;
-  }
+  },
 
-  static againstNullOrUndefined(value: unknown, name: string): void {
-    if (Guard.isNullish(value)) {
-      throw new ArgumentNotProvidedException(`${name} cannot be null or undefined`);
-    }
-  }
+  /**
+   * Returns true if `value` is shorter than `minLength`.
+   */
+  isShort(value: string | unknown[], minLength: number): boolean {
+    return value.length < minLength;
+  },
 
-  static againstEmpty(value: unknown, name: string): void {
-    if (Guard.isEmpty(value)) {
-      throw new ArgumentInvalidException(`${name} cannot be empty`);
-    }
-  }
+  /**
+   * Returns true if `value` is longer than `maxLength`.
+   */
+  isLong(value: string | unknown[], maxLength: number): boolean {
+    return value.length > maxLength;
+  },
 
-  private static isNullish(value: unknown): boolean {
-    return value === null || value === undefined;
-  }
-
-  private static isEmptyString(value: string): boolean {
-    return value.trim().length === 0;
-  }
-
-  private static isEmptyArray(value: unknown[]): boolean {
-    return value.length === 0;
-  }
-
-  private static isEmptyMapOrSet(value: Map<unknown, unknown> | Set<unknown>): boolean {
-    return value.size === 0;
-  }
-
-  private static objectEntriesAreEmpty(entries: [string, unknown][]): boolean {
-    if (entries.length === 0) return true;
-    return entries.every(([_, v]) => Guard.isEmpty(v));
-  }
-}
+  /**
+   * Returns true if `value` is outside the inclusive range [min, max].
+   */
+  isOutOfRange(value: number, min: number, max: number): boolean {
+    return value < min || value > max;
+  },
+} as const;

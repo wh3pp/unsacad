@@ -1,130 +1,78 @@
 import { UnwrapResultError } from './errors';
 
-export const enum ResultKind {
-  Ok = 0,
-  Err = 1,
-}
-
-export interface Ok<T> {
-  readonly kind: ResultKind.Ok;
-  readonly value: T;
-}
-
-export interface Err<E> {
-  readonly kind: ResultKind.Err;
-  readonly error: E;
-}
-
-export type Result<T, E> = Ok<T> | Err<E>;
+export type Result<T, E> = Ok<T, E> | Err<T, E>;
 
 /**
- * Functional Result type.
- *
- * Represents an operation that may succeed (`Ok`) or fail (`Err`).
- * Inspired by Rust's `Result<T, E>`.
+ * Extracts the success-value types from a tuple of Result objects.
+ * Supports readonly tuples.
+ */
+type ExtractOkTuple<T extends readonly unknown[]> = {
+  [K in keyof T]: T[K] extends Result<infer V, unknown> ? V : never;
+};
+
+/**
+ * Extracts the union of error types from a tuple of Result objects.
+ * Supports readonly tuples.
+ */
+type ExtractErrUnion<T extends readonly unknown[]> = {
+  [K in keyof T]: T[K] extends Result<unknown, infer E> ? E : never;
+}[number];
+
+/**
+ * Factory and utility functions for constructing and combining Results.
+ * Represents the outcome of an operation that can succeed (`Ok`) or fail (`Err`).
  */
 export const Result = {
   /**
-   * Creates a successful `Ok` result.
+   * Creates a successful `Ok` containing the given value.
    */
   ok<T, E = never>(value: T): Result<T, E> {
-    return { kind: ResultKind.Ok, value };
+    return new Ok(value);
   },
 
   /**
-   * Creates a failed `Err` result.
+   * Creates a failed `Err` containing the given error.
    */
   err<T = never, E = unknown>(error: E): Result<T, E> {
-    return { kind: ResultKind.Err, error };
+    return new Err(error);
   },
 
   /**
-   * Type guard that checks whether the result is `Ok`.
+   * Combines a homogeneous list of Results.
+   * - All Ok → Ok of collected values
+   * - Any Err → first Err encountered
    */
-  isOk<T, E>(r: Result<T, E>): r is Ok<T> {
-    return r.kind === ResultKind.Ok;
-  },
-
-  /**
-   * Type guard that checks whether the result is `Err`.
-   */
-  isErr<T, E>(r: Result<T, E>): r is Err<E> {
-    return r.kind === ResultKind.Err;
-  },
-
-  /**
-   * Extracts the value from an `Ok`, or throws on `Err`.
-   *
-   * @throws UnwrapResultError if called on `Err`
-   */
-  unwrap<T, E>(r: Result<T, E>): T {
-    if (Result.isErr(r)) {
-      throw new UnwrapResultError('Attempted to unwrap a Result.Err', r.error);
+  combine<T, E>(results: readonly Result<T, E>[]): Result<T[], E> {
+    const values: T[] = [];
+    for (const result of results) {
+      if (result.isErr()) return Result.err(result.error);
+      values.push(result.value);
     }
-    return r.value;
+    return Result.ok(values);
   },
 
   /**
-   * Extracts the error from an `Err`, or throws on `Ok`.
-   *
-   * @throws UnwrapResultError if called on `Ok`
+   * Combines a heterogeneous tuple of Results while preserving
+   * the positional types of each Ok value.
    */
-  unwrapErr<T, E>(r: Result<T, E>): E {
-    if (Result.isOk(r)) {
-      throw new UnwrapResultError('Attempted to unwrapErr a Result.Ok', r.value);
+  all<T extends readonly Result<unknown, unknown>[]>(
+    results: T,
+  ): Result<ExtractOkTuple<T>, ExtractErrUnion<T>> {
+    const values: unknown[] = [];
+
+    for (const result of results) {
+      if (result.isErr()) {
+        return Result.err(result.error as ExtractErrUnion<T>);
+      }
+      values.push(result.value);
     }
-    return r.error;
+
+    return Result.ok(values as ExtractOkTuple<T>);
   },
 
   /**
-   * Returns the wrapped value if `Ok`, otherwise returns the provided default.
-   */
-  unwrapOr<T, E>(r: Result<T, E>, defaultValue: T): T {
-    return Result.isOk(r) ? r.value : defaultValue;
-  },
-
-  /**
-   * Returns the wrapped value if `Ok`, otherwise computes a fallback value.
-   */
-  unwrapOrElse<T, E>(r: Result<T, E>, fn: (error: E) => T): T {
-    return Result.isOk(r) ? r.value : fn(r.error);
-  },
-
-  /**
-   * Maps the value in `Ok`, returning a new `Result`.
-   * `Err` values are propagated unchanged.
-   */
-  map<T, U, E>(r: Result<T, E>, fn: (value: T) => U): Result<U, E> {
-    return Result.isOk(r) ? Result.ok(fn(r.value)) : Result.err(r.error);
-  },
-
-  /**
-   * Maps the error in `Err`, returning a new `Result`.
-   * `Ok` values are propagated unchanged.
-   */
-  mapErr<T, E, F>(r: Result<T, E>, fn: (error: E) => F): Result<T, F> {
-    return Result.isErr(r) ? Result.err(fn(r.error)) : Result.ok(r.value);
-  },
-
-  /**
-   * Chains computations by applying `fn` to the value of an `Ok`.
-   * This is also known as `flatMap` or `bind`.
-   */
-  andThen<T, U, E>(r: Result<T, E>, fn: (value: T) => Result<U, E>): Result<U, E> {
-    return Result.isOk(r) ? fn(r.value) : Result.err(r.error);
-  },
-
-  /**
-   * Pattern-matching for `Result`.
-   * Similar to `match` expressions in Rust.
-   */
-  match<T, E, R>(r: Result<T, E>, handlers: { ok: (value: T) => R; err: (error: E) => R }): R {
-    return Result.isOk(r) ? handlers.ok(r.value) : handlers.err(r.error);
-  },
-
-  /**
-   * Wraps a function call in a `Result`.
-   * Returns `Ok` if the function succeeds, `Err` if it throws.
+   * Evaluates a function and captures exceptions as `Err`
+   * instead of throwing.
    */
   fromThrowable<T, E = unknown>(fn: () => T): Result<T, E> {
     try {
@@ -135,8 +83,8 @@ export const Result = {
   },
 
   /**
-   * Converts a promise into a `Result`.
-   * Resolves to `Ok` if the promise succeeds, `Err` if it rejects.
+   * Wraps a Promise in a Result.
+   * Resolves to `Ok(value)` or `Err(reason)`.
    */
   async fromPromise<T, E = unknown>(promise: Promise<T>): Promise<Result<T, E>> {
     try {
@@ -146,3 +94,164 @@ export const Result = {
     }
   },
 };
+
+/**
+ * Base class providing the fluent API shared by `Ok` and `Err`.
+ */
+abstract class BaseResult<T, E> {
+  abstract isOk(): this is Ok<T, E>;
+  abstract isErr(): this is Err<T, E>;
+
+  /**
+   * Maps the success value when Ok; otherwise preserves Err.
+   */
+  map<U>(fn: (value: T) => U): Result<U, E> {
+    return this.isOk()
+      ? Result.ok(fn(this.value))
+      : Result.err((this as unknown as Err<T, E>).error);
+  }
+
+  /**
+   * Maps the error value when Err; otherwise preserves Ok.
+   */
+  mapErr<F>(fn: (error: E) => F): Result<T, F> {
+    return this.isErr()
+      ? Result.err(fn(this.error))
+      : Result.ok((this as unknown as Ok<T, E>).value);
+  }
+
+  /**
+   * Chains computations that return a Result (`flatMap` / `bind`).
+   */
+  andThen<U, F>(fn: (value: T) => Result<U, F>): Result<U, E | F> {
+    return this.isOk() ? fn(this.value) : Result.err((this as unknown as Err<T, E>).error);
+  }
+
+  /**
+   * Exhaustively handles the Ok and Err cases.
+   */
+  match<R>(handlers: { ok: (value: T) => R; err: (error: E) => R }): R {
+    return this.isOk()
+      ? handlers.ok(this.value)
+      : handlers.err((this as unknown as Err<T, E>).error);
+  }
+
+  /**
+   * Returns the value if Ok; otherwise throws `UnwrapResultError`.
+   */
+  unwrap(): T {
+    if (this.isOk()) return this.value;
+    throw new UnwrapResultError(JSON.stringify((this as unknown as Err<T, E>).error));
+  }
+
+  /**
+   * Returns the value if Ok; otherwise a provided default.
+   */
+  unwrapOr(defaultValue: T): T {
+    return this.isOk() ? this.value : defaultValue;
+  }
+
+  /**
+   * Returns the value if Ok; otherwise computes a fallback from the error.
+   */
+  unwrapOrElse(fn: (error: E) => T): T {
+    return this.isOk() ? this.value : fn((this as unknown as Err<T, E>).error);
+  }
+
+  /**
+   * Executes a side effect if Ok.
+   */
+  tap(fn: (value: T) => void): this {
+    if (this.isOk()) fn(this.value);
+    return this;
+  }
+
+  /**
+   * Executes a side effect if Err.
+   */
+  tapErr(fn: (error: E) => void): this {
+    if (this.isErr()) fn(this.error);
+    return this;
+  }
+
+  /**
+   * Converts the Result to a Promise.
+   * - Ok → resolved(value)
+   * - Err → rejected(error)
+   */
+  toPromise(): Promise<T> {
+    if (this.isOk()) {
+      return Promise.resolve(this.value);
+    }
+
+    const error = (this as unknown as Err<T, E>).error;
+
+    if (error instanceof Error) {
+      return Promise.reject(error);
+    }
+
+    return Promise.reject(
+      new UnwrapResultError(
+        typeof error === 'string' ? error : 'Result.Err rejected Promise',
+        error,
+      ),
+    );
+  }
+
+  /**
+   * Structural equality check.
+   */
+  equals(other: Result<unknown, unknown>): boolean {
+    if (this.isOk() && other.isOk()) {
+      return JSON.stringify(this.value) === JSON.stringify(other.value);
+    }
+    if (this.isErr() && other.isErr()) {
+      return JSON.stringify(this.error) === JSON.stringify(other.error);
+    }
+    return false;
+  }
+
+  toString(): string {
+    return this.isOk()
+      ? `Ok(${JSON.stringify(this.value)})`
+      : `Err(${JSON.stringify((this as unknown as Err<T, E>).error)})`;
+  }
+}
+
+/**
+ * Represents a successful result (`Ok`).
+ */
+export class Ok<T, E> extends BaseResult<T, E> {
+  readonly kind = 'Ok';
+
+  constructor(public readonly value: T) {
+    super();
+  }
+
+  isOk(): this is Ok<T, E> {
+    return true;
+  }
+
+  isErr(): this is Err<T, E> {
+    return false;
+  }
+}
+
+/**
+ * Represents a failed result (`Err`).
+ */
+export class Err<T, E> extends BaseResult<T, E> {
+  readonly kind = 'Err';
+
+  constructor(public readonly error: E) {
+    super();
+  }
+
+  isOk(): this is Ok<T, E> {
+    return false;
+  }
+
+  isErr(): this is Err<T, E> {
+    return true;
+  }
+}

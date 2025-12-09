@@ -1,17 +1,17 @@
-import { ExceptionBase } from '../exceptions/exception.base';
-
-export class UnwrapOptionError extends ExceptionBase {
-  readonly name = 'UnwrapOptionError';
-
-  constructor(message = 'Attempted to unwrap an Option.None value') {
-    super(message);
+export class UnwrapOptionError extends Error {
+  constructor(message?: string) {
+    super(message || 'Attempted to unwrap an Option.None value');
+    this.name = 'UnwrapOptionError';
   }
 }
 
-export class UnwrapResultError extends ExceptionBase {
-  readonly name = 'UnwrapResultError';
+export class UnwrapResultError extends Error {
+  constructor(message?: string, cause?: unknown) {
+    super(message || 'Attempted to unwrap a Result.Err value', { cause });
+    this.name = 'UnwrapResultError';
 
-  constructor(message: string, cause?: unknown) {
-    super(message, { cause });
+    if (cause && !this.cause) {
+      (this as unknown as { cause: unknown }).cause = cause;
+    }
   }
 }
